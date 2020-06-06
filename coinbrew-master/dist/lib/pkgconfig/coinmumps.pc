@@ -1,0 +1,14 @@
+prefix=/home/hdang/Schreibtisch/HiWiSport/coinbrew-master/dist
+#prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/coin-or/mumps
+
+Name: Mumps
+Description: Multifrontal Massively Parallel sparse direct Solver
+URL: https://github.com/coin-or-tools/ThirdParty-MUMPS
+Version: 2.0.0
+Libs: -L${libdir} -lcoinmumps
+Libs.private:     -lpthread
+Cflags: -I${includedir}
+Requires.private: coinmetis lapack blas 
