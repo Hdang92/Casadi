@@ -1,0 +1,107 @@
+-----------------------------------------------------------------
+Contents
+-----------------------------------------------------------------
+
+(1) Requirements
+(2) Directory structure
+(3) Installation of MA57 and its Matlab interface
+
+
+-----------------------------------------------------------------
+1. Requirements
+-----------------------------------------------------------------
+
+These instructions are for linux-based systems (both 32-bit and 64-bit machines 
+are supported).
+
+Requirements: 
+ - A recent version of Matlab
+   (tested against 2008b, 2009a, 2009b, 2010a, 2010b, 2011a).
+ - The supported C and Fortran compilers for your version of Matlab
+   (g95 compiler for versions prior to 2011a, gfortran thereafter).
+ - The MATLAB environment variable must point to your system matlab directory. 
+   From within Matlab, you can check where the environment variable points to 
+   by typing
+       MATLAB
+   If it is not pointing to the right location, then 
+   you can reset it by typing 
+       MATLAB = matlabpath
+   where matlabpath is replaced by the path where Matlab is installed, for 
+   example, 
+       MATLAB = '/usr/local/matlab/'
+
+-----------------------------------------------------------------
+2. Directory structure
+-----------------------------------------------------------------
+
+The directory matlab obtained after extracting the archive contains all the
+codes necessary for the installation and use of the MATLAB interface for
+MA57.
+
+The files in the matlab directory are:
+
+INSTALL                 Installation instructions
+README                  Instructions for using the interface
+ma57_install.m          Matlab code for installing MA57 and interface
+ma57_test.m             Simple Matlab test example
+ma57_stats.m            Simple example of printing the internal statistics
+ma57_full_test.m        Matlab test code aimed at fully exercising the interface
+ma57_test1.mat          Matrix used by ma57_test.m
+ma57_test2.mat          Matrix used by ma57_test.m
+ma57_test3.mat          Matrix used by ma57_test.m
+ma57_test.output        Sample output from running ma57_test.m
+ma57.m                  Matlab code for documentation 
+hsl_matlab.F90          Generic Fortran code for HSL Matlab interfaces
+ma57_factor.f90         Fortran code for Matlab interface
+ma57_solve.f90          Fortran code for Matlab interface
+
+-----------------------------------------------------------------
+3. Installation of MA57 and its Matlab interface
+-----------------------------------------------------------------
+
+- Extract the MA57 archive into the desired directory. 
+- Start matlab
+- Navigate to the extracted subdirectory 'matlab'
+- To install the interface, use the function ma57_install() as follows.
+
+    ma57_install() installs MA57 and its Matlab Interface. It is 
+       assumed that the BLAS and LAPACK routines provided by MATLAB 
+       are used, and mex is configured to use your preferred compiler. 
+       The test example is not run.
+ 
+    ma57_install(TEST) installs MA57 and its Matlab Interface and
+       optionally runs the test example. It is assumed that the BLAS and LAPACK 
+       routines provided with the interface are used, and mex is configured to
+       use your preferred compiler.
+       If TEST <= 0, the test example is not run; 
+       if TEST > 0, the test example is run and the user can compare the output
+       with that of the file OUT/install.output. Note that there may be very 
+       small differences because of the arithmetic differing on different 
+       computers.
+ 
+    ma57_install(TEST,LIBS) installs MA57 and its Matlab Interface 
+       and optionally runs the test example. It is assumed that mex is
+       configured to use your preferred compiler.
+       If LIBS has the value 'matlab' this is equivalent to the
+         setting LIBS='-mwlapack -mwblas'. Use of this option on a 64-bit
+         platform will force use of 64-bit default integers and may impede
+         the performance of the HSL code.
+       Otherwise LIBS should be set to specify which BLAS to link against, and
+         may optionally specify the location of other libraries (eg libf95.a
+         libgcc.a if they are not on a default search path). Typically
+         this will take the form of LIBS='-L/path/to/blas -lblas'.
+ 
+    ma57_install(TEST,LIBS,MEXFLAGS) installs MA57 and its Matlab 
+       Interface and optionally runs the test example. The contents of the
+       variable MEXFLAGS is passed to mex as follows.
+         mex $(MEXFLAGS) -c file.F90
+         mex $(MEXFLAGS) $(LIBS) -output foo.mex file.F90
+      If MEXFLAGS is not supplied it assumes the default value of
+        '-largeArrayDims' on a 64-bit platform and is empty on a 32-bit
+        platform.
+      If MEXFLAGS is supplied and BLAS='matlab' on a 64-bit machine, the user
+        must ensure that the relevant flag to force 64-bit default integers is
+        passed to the compiler by explictly setting FFLAGS='-i8 -fPIC' (g95) or
+        '-fdefault-real-8 -fPIC' (gfortran). (The -fPIC is needed as the mex
+        default value of FFLAGS uses -fPIC to create a shared library).
+

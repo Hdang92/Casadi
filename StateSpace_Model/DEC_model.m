@@ -1,7 +1,7 @@
 function [ ode, tc ] = DEC_model(tt,mp,H,J)
 
 %% import casadi
-    addpath('/home/hdang/Matlab/casadi-linux-matlabR2014b-v3.5.1')
+    addpath('/home/haidang/Matlab/casadi-linux-matlabR2014b-v3.4.5')
     import casadi.*
 
 %% initialize variables

@@ -1,0 +1,187 @@
+2016-09-02  Jonathan Hogg
+Version 3.10.0
+   Fix bug in matlab interface affecting cases with multiple right-hand sides.
+
+2014-02-07  Jonathan Hogg
+Version 3.9.0
+   Substantial rewrite of matlab/ma57_solve.f90. This fixes a bug where
+   ma57_solve() didn't accept multiple right-hand sides. It also massively
+   simplifies the code through proper use of newer HSL_MATLAB routines.
+
+2013-03-26  Jonathan Hogg
+Version 3.8.0
+   Replace calls to FD15 with F95 intrinsics.
+   Ensure ISNPIV is defined before accessing it (innocous bug found by nagfor)
+
+2013-03-20  Jonathan Hogg
+Version 3.7.1
+   Update MATLAB install to handle version 8.0 and higher. Minor
+   cleanup of other things relating to MATLAB interface.
+
+2011-05-05  Mario Arioli
+Version 3.7.0 Add MATLAB interface
+   Based on old beta test version, but updated to use new hsl_matlab 2.0
+   functionality.
+
+2011-01-24  Iain Duff
+Version 3.6.0
+    Two minor bugs corrected.  INFO(40) is now initialized to
+    zero and the test on the value of PHASE is separated
+    from that on ICNTL(7) at statement 29 to ensure PHASE
+    has been set before it is tested.
+
+2010-08-28
+Version 3.5.0
+   Fixed bug when insufficient space left to move
+   off-diagonal entries of two by two pivots at end of
+   factorization. Corrected computation of INFO(18) on
+   error return from MA57B/BD.  Corrected computation of
+   INFO(20) after return from MA57O/OD.
+
+2009-11-30
+Version 3.4.0
+   Fixed bug when using MA27 ordering (MA57VD/MA57HD) that
+   was caused because no elbow room was allowed by MA57AD
+   when there were no entries on diagonal of input matrix.
+   Fix was to use different pointer within array KEEP for
+   this ordering.
+
+2009-09-03
+Version 3.3.0
+   Some typos corrected in comments.
+   Length given to array IW in MA57K/KD (called from MA57A/AD
+   as IKEEP(IFCT)) increased to avoid problem when order
+   of matrix is greater than number of entries.
+   Value of dropping control (ICNTL(16)) is now printed
+   on entry to MA57B/BD.
+   Bug in ordering from MA27 corrected in MA57H/HD (was
+   previously identical to MA27H/HD).
+   Test now made to check space if less than N pivots are
+   chosen at end of MA57O/OD whatever the reason (previously
+   was only done if ICNTL(16) was equal to 1).
+   INFO/RINFO parameters now all initialized to zero on
+   entry to MA57O/OD so that they have a valid value in the
+   case of an error return.
+
+2007-09-19
+Version 3.2.0
+   New option added (ICNTL(16)) that allows the removal of
+   blocks of small entries to the end of the factorization.
+   Is particularly powerful when matrix is severely rank
+   deficient.  Numerous other mainly cosmetic changes that
+   don't affect interface.
+
+2007-08-03
+Version 3.1.0
+   The new version of MC47 (that incorporates an updated
+   version of MC50 is used).
+
+2006-12-01
+Version 3.0.2
+   Comments adjusted to meet the 72-character limit.
+
+2005-06-15
+Version 3.0.1
+   Setting of ALENB in MA57B/BD moved before first error exit to avoid
+   undefined variable if error invoked.  INFO(1) initialized to zero in
+   call to MA57C/CD.
+
+2005-03-02
+Version 3.0.0 A new option has been added for ordering the matrix.
+   If ICNTL(6) is equal to 5 then the ordering chosen depends on the matrix
+   characteristics.
+   At the moment the choices are MC50 or METIS. INFO(36) is set to ordering
+   used. A minor change has been made to the pivot control to reduce   the amount
+   of researching on failed pivots (resetting of KR).
+   FD05 dependence changed to FD15.
+
+2004-12-13
+Version 2.3.0 Several minor changes after field testing.
+   Scale factors (RINFO(16) and RINFO(17) set to 1
+   if scaling not used.
+   Option to handle dense columns invoked for METIS ordering.
+   Value of SCHNAB(1) set to 1. to allow Schnabel-Eskow to
+   work on matrix with a rows of zeros.
+   Some diagnostic printing and STOP statements removed from
+   MC50.
+
+2004-11-04
+Version 2.2.1
+   Change to assembly of reals in MA57O/OD leading to more efficient code at
+   suggestion of Stephane Pralet.
+
+2004-09-10
+Version 2.2.0
+   Defaults for ICNTL(6), ICNTL(9) and
+   CNTL(5) changed. Scaling factors (optionally) printed.
+
+2004-09-01
+Version 2.1.0 Default changed to static pivoting off.
+
+2004-07-31
+Version 2.0.0 established at HSL 2004 release.
+
+2004-07-20
+Several changes incorporated for HSL 2004 code.
+   Removed unused INT,ABS from MA57U/UD
+   INFO(32), INFO(33), and INFO(34) added
+   INFO(32): no. of zeros in the triangle of the factors
+   INFO(33): no. of zeros in the rectangle of the factors
+   INFO(34): no. of zero columns in rectangle of the factors
+   Static pivoting available (controlled by CNTL(4), CNTL(5))
+   Scaling using symmetrized MC64 (ICNTL(15))
+   Links to METIS_NODEND ordering
+
+2004-07-12
+Version 1.0.0 Version numbering added.
+
+2004-05-24
+Statement functions in MA57U/UD replaced by in-line code.
+
+2003-03-25
+MC50 (AMD with dense row protection) and MA27 (minimum degree) added.
+   Invoked by ICNTL(6) equal to 2 and 3,
+   respectively. Routines MA57H/HD, MA57V/VD, and MA57Z/ZD
+   have been added to duplicate routines MA27H/HD, MA27G/GD,
+   and MA27U/UD from MA57 and MC50B/BD is another internal
+   routine of MA57. ICNTL(14) has been added to control
+   density of rows regarded as dense by the MC50 and MA27
+   orderings.
+
+2002-12-06
+The test for convergence of iterative refinement changed to
+   avoid any problem with comparisons of numbers held in
+   registers.
+
+2001-12-20
+INFO(1) initialized to zero in MA57E/ED
+
+2001-10-26
+Printing controls corrected to ensure ICNTL(5) is used and
+   unit number always checked for being positive before
+   printing. Text and comments changed to reflect that D
+   inverse is held in factors and text for solution changed
+   from Right-hand side to solution.
+   Option of choosing two 1 x 1 pivots when 2 x 2 fails
+   removed.
+   MC47B/BD given remaining length in KEEP to avoid compresses
+
+2001-07-04
+Use of MC41 changed to use of MC71.
+
+2001-02-06
+Default values for ICNTL(12) and ICNTL(13) changed.
+   Control for direct addressing in solve changed to be
+   on number of rows and number columns in block pivot.
+   Several comments changed as consequence.
+   INFO(31) added to record number of block pivots.
+   Subroutines MA57X/XD and MA57Y/YD added for efficiency when
+   only one rhs (equivalent to MA57Q/QD and MA57R/RD resp).
+
+2000-11-01
+Entries in IW initialized to zero in MA57O/OD to avoid copy
+   of unassigned variables by MA57E/ED.
+   AINPUT and IINPUT reset in call to MA57E/ED.
+
+1999-09-13
+Original date 13 September 1999

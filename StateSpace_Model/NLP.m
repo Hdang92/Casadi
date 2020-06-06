@@ -1,6 +1,6 @@
 %% initialize
-addpath(genpath('/home/hdang/Matlab/LA_toolbox'))
-addpath('/home/hdang/Matlab/casadi-linux-matlabR2014b-v3.5.1')
+addpath(genpath('/home/haidang/Matlab/LA_toolbox'))
+addpath('/home/haidang/Matlab/casadi-linux-matlabR2014b-v3.4.5')
 
 close all
 clc

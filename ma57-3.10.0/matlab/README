@@ -1,0 +1,302 @@
+-----------------------------------------------------------------
+Contents
+-----------------------------------------------------------------
+
+(1) Introduction
+(2) Requirements
+(3) Installation
+(4) Using the Matlab interface
+(5) control, info and rinfo arguments
+
+
+-----------------------------------------------------------------
+1. Introduction
+-----------------------------------------------------------------
+
+Given a sparse matrix A = a_{ij} of dimension n, MA57 solves the linear system
+   A x = b
+
+MA57 offers two MATLAB procedures:
+	ma57_factor
+	ma57_solve
+
+ma57_factor performs an LDL' factorization of a permutation of a sparse A,
+   using the HSL2011 package MA57. It is equivalent to calling the Fortran
+   routines MA57AD, MA57BD, and (if required) MA57ED.
+ma57_solve uses the factorization in order to compute the solution(s)
+   corresponding to the right-hand side(s) b. It is equivalent to calling
+   the Fortran routines MA57CD and MA57DD.
+
+MA57 routines implement a multifrontal algorithm for the
+factorization of A. The matrix L is a unit lower triangular matrix and
+D is block diagonal with blocks of order 1 or 2. MA57 uses only
+the diagonal and the lower triangle of A.
+The upper triangle is assumed to be the transpose of the lower.
+Before the factorization starts, scaling is performed using the HSL2011
+package MC64.
+In order to minimize the fill-in during the factorization process,
+the user can choose to reorder the matrix A either by Approximate
+Minimum Degree (AMD) (the default value) or, if the user wants to use
+a permutation p, he/she can call the interfaces using A(p,p) and
+setting the control.order parameter to a value > 1 ( see Section 5
+below).
+
+For stability, all the pivots are tested numerically. However, in
+order to avoid excessive disruption of the AMD or the user's reorderings
+threshold pivoting is used. Therefore, denoting the entries to be
+processed at step k of the factorization by f_{ij}, a 1x1 numerical
+pivot will be used if
+
+|f_{kk} | \ge u \max_{j \ne k} |f_{kj} |,
+
+or a 2x2 numerical pivot will be used if
+
+(|f_{k,k}|   |f_{k,k+1}|  ) (\max_{j\ne k,k+1} |f_{k,j}|  )        (1)
+(                         ) (                             ) <= u^-1( )
+(|f_{k+1,k}| |f_{k+1,k+1}|) (\max_{j\ne k,k+1} |f_{k+1,j}|)        (1)
+
+where u is a threshold parameter given in the control.thres
+parameter (the default value is 0.01), see Section 5 below.
+During stage k of a multifrontal implementation
+of Gaussian elimination, some entries may not be eligible to be chosen
+as a pivot. In this case, the algorithm will proceed using the
+eligible variables only and will choose the rejected pivot at a later
+stage when the candidate entry will become eligible.
+Additional details about the theory of the multifrontal method and the
+numerical pivoting strategy can be found in [1] and [2].
+
+
+References
+
+[1] I.S. Duff "MA57: a new code for the solution of sparse symmetric
+indefinite systems", Technical Report RAL-TR-2002-024, ACM
+Trans. Math. Software 30 (2004), 118-144.
+
+[2] I.S. Duff and S. Pralet, "Strategies for scaling and pivoting for
+sparse symmetric indefinite problems", SIAM. J. Matrix Anal. & Appl. 27,
+(2005), 313-340.
+
+-----------------------------------------------------------------
+2. Requirements
+-----------------------------------------------------------------
+
+These instructions are for linux-based systems (both 32-bit and 64-bit
+machines are supported).
+
+Requirements:
+ - Matlab 2007a or more recent version
+ - The g95 compiler
+ - The MATLAB environment variable must point to your system
+ matlab directory (see INSTALL for further details)
+
+
+-----------------------------------------------------------------
+3. Installation
+-----------------------------------------------------------------
+
+Instructions for installing the Matlab interface to MA57 are
+located in INSTALL. You can type ma57_install without any
+input arguments at the command line of Matlab to proceed to the
+standard installation.
+
+
+-----------------------------------------------------------------
+4. Using the Matlab interface
+-----------------------------------------------------------------
+
+To solve Ax=b, first a factorization of A must be performed.
+  >> struct = ma57_factor(A)
+This is followed by a solve using the factors stored in struct, which must
+not be modified by the user.
+  >> x = ma57_solve(A, b, struct)
+If multiple systems are to be solved using the same matrix A, it need only
+be factorized once. For example,
+  >> struct = ma57_factor(A)
+  >> x1 = ma57_solve(A, b1, struct)
+  >> x2 = ma57_solve(A, b2, struct)
+
+Additional parameters may be used to control the behaviour of both functions
+and statistics may also be collected:
+  >> [struct, info, rinfo] = ma57_factor(A, control)
+  >> [x, info, rinfo] = ma57_solve(A, b, struct, nitre)
+The arguments are described below.
+
+-----------------------------------------------------------------
+4(a). The routine ma57_factor
+-----------------------------------------------------------------
+
+struct = ma57_factor(A)
+[struct, info, rinfo] = ma57_factor(A, control)
+
+If A is not square or sparse an ERROR message is printed. If a
+fatal error occurs during the factorization an error message is
+printed. Fatal errors include the wrong number of input or output arguments
+and insufficient memory.
+If the numerical rank < length(A) a WARNING message is printed.
+
+INPUT
+   A           sparse symmetric input matrix (only the lower triangular part
+               will be used). Note that if A is not symmetric ma57_factor and
+               ma57_solve will expand the the lower triangular entries of A
+               to form a symmetric matrix.
+   control     OPTIONAL structure whose components affect the behaviour of
+               MA57 as detailed in Section 5.
+
+OUTPUT
+   struct      structure containing the factorization produced by MA57. This
+               is not intended to be accessed by the user, and should be
+               passed unaltered to subsequent calls to ma57_solve.
+   info        OPTIONAL array containing statistics. The values will be set as
+               described in Section 5.
+   rinfo       OPTIONAL array containing statistics. The values will be set as
+               described in Section 5.
+
+-----------------------------------------------------------------
+4(b). The routine ma57_solve
+-----------------------------------------------------------------
+
+x = ma57_solve(A, b, struct)
+[x, info, rinfo] = ma57_solve(A, b, struct, nitre)
+
+INPUT
+   A           sparse symmetric input matrix (only the lower triangular part
+               will be used). This must be the same as for the call to
+               ma57_factor.
+   b           an n x m matrix containing m right-hand sides.
+   struct      the factors returned by a previous call to ma57_factor.
+   nitre       OPTIONAL number specifying maximum number of steps for
+               iterative refinement. Iterative refinement can be disabled
+               by setting this value to 0. If it is not present then at
+               most 10 steps of iterative refinement are performed.
+
+OUTPUT
+   x           an n x m matrix containing the solution to Ax=b.
+   info        OPTIONAL array containing statistics. The values will be set as
+               described in Section 5.
+   rinfo       OPTIONAL array containing statistics. The values will be set as
+               described in Section 5.
+
+-----------------------------------------------------------------
+5. control, info and rinfo arguments
+-----------------------------------------------------------------
+
+control
+-------
+If any of the fields of control is omitted the default value is
+automatically set. Incorrect values or empty values produce an error
+message.
+
+control.order
+         Allows the user to choose a reordering strategy for the pivot
+         sequence:
+            control.order <= 0   ==> AMD ordering is used
+            control.order  > 1   ==> User's reordering p is used and
+                                     the user must pass the
+                                     permuted matrix A(p,p) in the
+                                     input
+         Its default value is 0.
+
+control.thres
+         The value of the threshold u (see MA57 Specification sheet).
+         Its default value is 0.01.
+
+control.stpv
+         If stpv is set to a value greater than zero, static pivoting
+         is invoked. This means that if, at any stage of the
+         multifrontal elimination, the threshold criterion defined by
+         control.thres prevents us choosing a pivot, then we first weaken
+         the threshold by successively trying values one tenth of the
+         previous until a threshold of sqrt(thresh)*stvp is reached.
+         If the pivot is still not chosen, but involves non eligible
+         variables, then the diagonal entries are replaced by
+         control.stpv times the largest modulus of an entry in the
+         original matrix and are used as 1 by 1 pivots in the
+         factorization. The default value is 0.
+         We advise the user interested in this option to use first a
+         value close to sqrt(eps) for stpv. Iterative refinement must
+         be used but convergence is not guaranteed.
+
+
+info
+----
+
+info(1)     will be 0 after a successful execution;
+            a positive value indicates that the matrix A has
+            numerical pseudo rank < length(A). The solution can be
+            incorrect, and info(25) holds the numerical pseudo rank
+            value.
+info(2) to info(4) are only used internally.
+info(5)     Forecast number of real in the factors.
+info(6)     Forecast number of integers in the factors.
+info(7)     Forecast maximum frontal matrix size.
+info(8)     Forecast number of nodes in the assembly tree.
+info(9)     Forecast of the length of fact array(real)
+            without numerical pivoting.
+info(10)    Forecast of the length of ifact array(integer)
+            without numerical pivoting.
+info(11)    Length of fact required for a successful
+            completion of the numerical phase allowing
+            data compression (without numerical pivoting).
+info(12)    Length of ifact required for a successful
+            completion of the numerical phase allowing
+            data compression (without numerical pivoting).
+info(13)    Number of data compresses.
+info(14)    Number of entries in factors.
+info(15)    Storage for real data in factors.
+info(16)    Storage for integer data in factors.
+info(17)    Minimum length of fact required for a successful
+            completion of the numerical phase.
+info(18)    Minimum length of ifact required for a successful
+            completion of the numerical phase.
+info(19)    Minimum length of fact required for a successful
+            completion of the numerical phase without
+            data compression.
+info(20)    Minimum length of ifact required for a successful
+            completion of the numerical phase without data compression.
+info(21)    Order of the largest frontal matrix.
+info(22)    Number of 2x2 pivots.
+info(23)    Total number of fully-summed variables passed to
+            the father node because of numerical pivoting.
+info(24)    Number of negative eigenvalues.
+info(25)    Rank of the factorization of the matrix.
+info(26)    Only used internally
+info(27)    Pivot step where static pivoting commences and
+            it is set to zero if no modification performed.
+info(28)    Number of data compresses on real data structures.
+info(29)    Number of data compresses on integer data structures.
+info(30)    Number of steps performed by Iterative Refinement.
+info(31)    Number of block pivots in factors (see info(8)).
+info(32)    Number of zeros in the triangle of the factors.
+info(33)    Number of zeros in the rectangle of the factors.
+info(34)    Number of zero columns in rectangle of the factors.
+info(35)    Number of pivots chosen in the static pivoting phase.
+info(36) to info(40) are only used internally.
+
+rinfo
+-----
+rinfo(1)    Forecast number of floating_point additions
+            for the assembly processes.
+rinfo(2)    Forecast number of floating_point operations
+            to perform the elimination operations
+            counting a multiply-add pair as two operations
+rinfo(3)    Number of floating_point additions
+            for the assembly processes.
+rinfo(4)    Number of floating_point operations
+            to perform the elimination operations
+            counting multiply-add pair as two operations.
+rinfo(5)    Only used internally
+rinfo(6)    Omega1 (backward error) (see MA57 spec).
+rinfo(7)    Omega2 (backward error) (see MA57 spec).
+rinfo(8) to rinfo(10) are only used internally
+rinfo(11)   Cond number for Omega1
+rinfo(12)   Cond number for Omega2
+rinfo(13)   Estimated forward error
+rinfo(14) to rinfo(15) are only used internally.
+rinfo(16)   Minimum value of the scaling factor (MC64).
+rinfo(17)   Maximum value of the scaling factor (MC64).
+rinfo(18)   Maximum modulus of matrix entry.
+rinfo(19) and rinfo(20) are only used internally.
+rinfo(21)   Analysis phase cputime (sec).
+rinfo(22)   Factorization phase cputime (sec).
+rinfo(23)   Solution phase cputime (sec) without iterative refinement.
+rinfo(24)   Solution phase cputime (sec) with iterative refinement.

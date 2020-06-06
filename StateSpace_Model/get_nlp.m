@@ -1,7 +1,7 @@
 function [ nlp, m, lbw, ubw, lbg, ubg, w0 ] = get_nlp(ode, u1, y1, out, n_cyc, N, tt)
 
 %% import casadi
-    addpath('/home/hdang/Matlab/casadi-linux-matlabR2014b-v3.5.1')
+    addpath('/home/haidang/Matlab/casadi-linux-matlabR2014b-v3.4.5')
     import casadi.*
 
 %% Formulation of NLP
@@ -175,7 +175,7 @@ end
     eb = vertcat(B{:});
 
 % Jacobian
-    J = 0.5*wy*dot(ey,ey) + 0.5*wu*dot(eu,eu) + 0.5*wb*dot(eb,eb) + J;
+    J = 0.5*wy*dot(ey,ey) + 0.5*wu*dot(eu,eu) + 0.5*wb*dot(eb,eb);
     
 % create nlp structure
     nlp = struct('f', J, 'x', params, 'g', vertcat(g{:}), 'p', M);

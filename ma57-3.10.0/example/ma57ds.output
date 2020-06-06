@@ -1,0 +1,215 @@
+
+
+Entering analysis phase (MA57AD) with ...
+N         Order of matrix                     =           5
+NE        Number of entries                   =           7
+ICNTL(1)  Stream for errors                   =           6
+ --- (2)  Stream for warnings                 =           6
+ --- (3)  Stream for monitoring               =           6
+ --- (4)  Stream for statistics               =          -1
+ --- (5)  Level of diagnostic printing        =           4
+ --- (6)  Flag for input pivot order          =           5
+ --- (7)  Numerical pivoting control (st est) =           1
+ --- (12) Node amalgamation parameter         =          16
+ --- (15) Scaling control (storage estimate)  =           1
+
+ Matrix entries:
+     1: (       1       1)     2: (       1       2)     3: (       2       3)
+     4: (       2       5)     5: (       3       3)     6: (       3       4)
+     7: (       5       5)
+
+Leaving analysis phase (MA57AD) with ...
+INFO(1)  Error indicator                      =           0
+Number of entries in matrix with diagonal     =           9
+INFO(3)  Number of out-of-range indices       =           0
+INFO(4)  Number of off-diagonal duplicates    =           0
+INFO(5)  Forecast real storage for factors    =          12
+----(6)  Forecast integer storage for factors =          13
+----(7)  Forecast maximum front size          =           4
+----(8)  Number of nodes in assembly tree     =           2
+----(9)  Size of FACT without compress        =          48
+----(10) Size of IFACT without compress       =          53
+----(11) Size of FACT with compress           =          48
+----(12) Size of IFACT with compress          =          53
+----(13) Number of compresses                 =           0
+----(36) Ordering strategy used by code       =           2
+RINFO(1) Forecast additions for assembly      = 1.00000D+01
+RINFO(2) Forecast ops for elimination         = 3.40000D+01
+
+Permutation array:
+           5           4           3           2           1
+
+Number of entries in rows of permuted matrix:
+           2           2           2           2           1
+
+Column indices of permuted matrix:
+           5           2           4           3           3
+           2           2           1           1
+
+Tree nodes at which variables eliminated:
+           2           2           2           2           1
+
+Map array:
+           9           8           6           2           5
+           4           1
+
+
+Entering factorization phase (MA57BD) with ...
+N       Order of input matrix               =           5
+NE      Entries in input matrix             =           7
+        Entries in input matrix (inc diags) =           9
+ICNTL(1)  Stream for errors                 =           6
+ --- (2)  Stream for warnings               =           6
+ --- (3)  Stream for monitoring             =           6
+ --- (4)  Stream for statistics             =          -1
+ --- (5)  Level of diagnostic printing      =           4
+ --- (7)  Numerical pivoting control        =           1
+ --- (8)  Restart or discard factors        =           0
+ --- (11) Block size for Level 3 BLAS       =          16
+ --- (15) Scaling control (1 on)            =           1
+ --- (16) Dropping control (1 on)           =           0
+LFACT   Size of real working space          =        1000
+LIFACT  Size of integer working space       =         500
+        Number nodes in assembly tree       =           2
+CNTL(1) Value of threshold parameter        = 0.10000D-01
+CNTL(2) Threshold for zero pivot            = 0.10000D-19
+CNTL(4) Control for value of static pivots  = 0.00000D+00
+CNTL(5) Control for number delayed pivots   = 0.00000D+00
+
+Matrix entries:
+     1: (  2.00000000D+00)     2: (  3.00000000D+00)     3: (  4.00000000D+00)
+     4: (  6.00000000D+00)     5: (  1.00000000D+00)     6: (  5.00000000D+00)
+     7: (  1.00000000D+00)
+
+Permutation array:
+           5           4           3           2           1
+
+Number of entries in rows of permuted matrix:
+           2           2           2           2           1
+
+Tree nodes at which variables eliminated:
+           2           2           2           2           1
+
+Number of assemblies at each tree node:
+           0           1
+
+Map array:
+           9           8           6           2           5
+           4           1
+
+Column indices of permuted matrix:
+           5           2           4           3           3
+           2           2           1           1
+
+Leaving factorization phase (MA57BD) with ...
+INFO (1)                                      =           0
+ --- (2)                                      =           0
+ --- (14) Number of entries in factors        =          12
+ --- (15) Real storage for factors            =          13
+ --- (16) Integer storage for factors         =          13
+ --- (17) Min LFACT with compresses           =          48
+ --- (18) Min LIFACT with compresses          =          53
+ --- (19) Min LFACT without compresses        =          48
+ --- (20) Min LIFACT without compresses       =          53
+ --- (21) Order of largest frontal matrix     =           4
+ --- (22) Number of 2x2 pivots                =           1
+ --- (23) Number of delayed pivots            =           0
+ --- (24) Number of negative eigenvalues      =           2
+ --- (25) Rank of factorization               =           5
+ --- (28) Number compresses on real data      =           0
+ --- (29) Number compresses on integer data   =           0
+ --- (31) Number of block pivots in factors   =           2
+ --- (32) Number of zeros factors triangle    =           4
+ --- (33) Number of zeros factors rectangle   =           0
+ --- (34) Number of zero cols factors rect    =           0
+ --- (35) Number of static pivots             =           0
+RINFO(3)  Operations during node assembly     =   1.000D+01
+-----(4)  Operations during node elimination  =   3.900D+01
+-----(5)  Extra operations because of BLAS    =   0.000D+00
+-----(18) Largest modulus of entry in matrix  =   6.000D+00
+RINFO(16) Minimum value of scaling factor     =   4.082D-01
+-----(17) Maximum value of scaling factor     =   7.071D-01
+
+For each block, the following information is provided:
+   1. Block number, number of rows, number of columns
+   2. List of indices for the pivot, each negated if part of
+      a 2x2 pivot
+   3. The factorized block pivot
+      It has the form
+            -1  T
+        L  D   L 
+                         -1    T
+      and is printed as D and L  packed together.
+   4. List of indices for the non-pivot columns
+   5. The non-pivot part as rectangular block by rows
+
+Block pivot     1 with     1 rows and     2 columns
+           5
+  6.0000D+00                                                            
+           2
+ -6.0000D+00                                                            
+
+Block pivot     2 with     4 rows and     4 columns
+          -4          -3           2           1
+ -2.0000D-01  1.0000D+00  7.3030D-01  0.0000D+00                        
+             -0.0000D+00  0.0000D+00  0.0000D+00                        
+                         -1.6667D-01 -1.4434D-01                        
+                                      8.8889D-01                        
+
+
+Scaling factors:
+ 0.70711D+00 0.40825D+00 0.44721D+00 0.44721D+00 0.40825D+00
+
+Entering solution phase (MA57CD) with ...
+JOB       Control on coefficient matrix       =           1
+N         Order of matrix                     =           5
+ICNTL(1)  Stream for errors                   =           6
+ --- (2)  Stream for warnings                 =           6
+ --- (3)  Stream for monitoring               =           6
+ --- (4)  Stream for statistics               =          -1
+ --- (5)  Level of diagnostic printing        =           4
+LFACT     Length of array FACT                =        1000
+LIFACT    Length of array IFACT               =         500
+NRHS      Number of right-hand sides          =           1
+LRHS      Leading dimension of RHS array      =          10
+LW        Leading dimension of work array     =          12
+ICNTL(13) Threshold for Level 2 and 3 BLAS    =          10
+
+For each block, the following information is provided:
+   1. Block number, number of rows, number of columns
+   2. List of indices for the pivot, each negated if part of
+      a 2x2 pivot
+   3. The factorized block pivot
+      It has the form
+            -1  T
+        L  D   L 
+                         -1    T
+      and is printed as D and L  packed together.
+   4. List of indices for the non-pivot columns
+   5. The non-pivot part as rectangular block by rows
+
+Block pivot     1 with     1 rows and     2 columns
+           5
+  6.0000D+00                                                            
+           2
+ -6.0000D+00                                                            
+
+Block pivot     2 with     4 rows and     4 columns
+          -4          -3           2           1
+ -2.0000D-01  1.0000D+00  7.3030D-01  0.0000D+00                        
+             -0.0000D+00  0.0000D+00  0.0000D+00                        
+                         -1.6667D-01 -1.4434D-01                        
+                                      8.8889D-01                        
+
+
+Scaling factors:
+ 0.70711D+00 0.40825D+00 0.44721D+00 0.44721D+00 0.40825D+00
+
+Right-hand side         1
+    8.000D+00    4.500D+01    3.100D+01    1.500D+01    1.700D+01
+
+
+Leaving solution phase (MA57CD) with ...
+
+Solution                1
+    1.000D+00    2.000D+00    3.000D+00    4.000D+00    5.000D+00
