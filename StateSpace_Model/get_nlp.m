@@ -1,5 +1,20 @@
-function [ nlp, m, lbw, ubw, lbg, ubg, w0 ] = get_nlp(ode, u1, y1, out, n_cyc, N, tt)
+function [ nlp, m, lbw, ubw, lbg, ubg, w0, R ] = get_nlp(ode, u1, y1, out, n_amp, N, tt)
 
+% Inputs: - ode:
+%         - u1: 
+%         - y1: 
+%         - out: 
+%         - n_amp: number of amplitudes
+%         - N: number of discretization 
+%         - tt:
+% Outputs:- nlp:
+%         - m:
+%         - lbw:
+%         - ubw:
+%         - lbg:
+%         - ubg:
+%         - w0:
+%         - R:
 %% import casadi
     addpath('/home/haidang/Matlab/casadi-linux-matlabR2014b-v3.4.5')
     import casadi.*
@@ -32,33 +47,39 @@ function [ nlp, m, lbw, ubw, lbg, ubg, w0 ] = get_nlp(ode, u1, y1, out, n_cyc, N
     g={};     % equality constraints
     lbg = []; % lower bound g
     ubg = []; % upper bound g
-    wt = {};  % ??
 
+    x1 = {};
+    x = {};
+    B = {};
+    U = {};
 % initialization of sample time count
     n = 0;
     
 % "Lift" initial conditions
-    J=0;
-
+    %J=0;
+    
 % Formulate the NLP
-for i=1:n_cyc
-    % drop state memory when new cycle starts
+for i=1:n_amp
+    % drop state memory when new amplitude starts
         Xk = MX.sym(['X' num2str(n)], nx); % state memory
         Bk = MX.sym(['B' num2str(n)] ,nb); % noise memory
-        w = [w, {Xk}, {Bk}];                        % symbolic nlp vector
         
+
+        w = [w, {Xk}, {Bk}];                        % symbolic nlp vector
+        x1 = [x1,{Xk(1,1)}];
+        x_0 = [{Xk(2,1)},{Xk(3,1)},{Xk(4,1)},{Xk(5,1)},{Xk(6,1)},{Xk(7,1)}];
+        B = [B,{Bk}];
         %%%%%%%%%% RP - changed initial X values from zero to inf
         lbw = [lbw; -inf*ones(nx,1); zeros(nb,1)]; % lower bounds of initial state and noise values
         ubw = [ubw; inf*ones(nx,1); zeros(nb,1)];  % upper bounds of initial state and noise values
         
         w0 = [w0; zeros(nx,1); zeros(nb,1)];       % numeric initial state and noise values
-        
-%         J = J
 
     for k=0:N-1
         % New NLP variable for the control
             Uk = MX.sym(['U_' num2str(n)]);
             w = [w, {Uk}];
+            U = [U,{Uk}];
             lbw = [lbw; -inf];
             ubw = [ubw;  inf];
             w0 = [w0;  u1(i,k+1)];
@@ -72,8 +93,12 @@ for i=1:n_cyc
             %%%%%%%%%%%%
             
             Xk = MX.sym(['X_' num2str(n)], nx); % New NLP variable for state at end of interval
-            Bk = MX.sym(['B_' num2str(n)],nb);  % New NLP variable for the process noise
+            Bk = MX.sym(['B_' num2str(n)], nb); % New NLP variable for the process noise
             w = [w, {Xk}, {Bk}];
+            x1 = [x1, {Xk(1,1)}];
+            B = [B, {Bk}];
+            %x = [x,{Xk(2:7,1)}];
+
             lbw = [lbw; -inf*ones(nx,1) ; -inf*ones(nb,1)];
             ubw = [ubw;  inf*ones(nx,1); inf*ones(nb,1)];
             
@@ -98,85 +123,36 @@ end
 % Decision variables and their initialization
     params=[vertcat(w{:});params_D];
 
-    
-%%
-% Extract the first state x1
-    xk1 = {};
-    i = [1:2*(N+1)+N: (2*(N+1)+N)*(n_cyc-1)+1];
-    j = [2*(N+1)+N-1: 2*(N+1)+N: (2*(N+1)+N)*(n_cyc-1) + 2*(N+1)+N-1];
-    k=[];
-
-    for ii = 1: n_cyc
-      ki = [i(ii):3:j(ii)];
-      k = [k,ki];
-    end
-
-    for jj=1: (n_cyc*(N+1))
-        xk1{jj} = w{1,k(jj)}(1,1);
-    end
-
-% Extract the process noise
-    B = {};
-    i = [2:2*(N+1)+N: (2*(N+1)+N)*(n_cyc-1)+2];
-    j = [2*(N+1)+N: 2*(N+1)+N: (2*(N+1)+N)*(n_cyc-1) + 2*(N+1)+N];
-
-    k=[];
-
-    for ii = 1: n_cyc
-      ki = [i(ii):3:j(ii)];
-      k = [k,ki];
-    end
-
-    for jj=1: (n_cyc*(N+1))
-        B{jj} = w{1,k(jj)};
-    end
-
-% Extract the input
-    U = {};
-    i = [3:2*(N+1)+N: (2*(N+1)+N)*(n_cyc-1)+3];
-    j = [2*(N+1)+N-2: 2*(N+1)+N: (2*(N+1)+N)*(n_cyc-1) + 2*(N+1)+N-2];
-
-    k=[];
-
-    for ii = 1: n_cyc
-      ki = [i(ii):3:j(ii)];
-      k = [k,ki];
-    end
-
-    for jj=1: (n_cyc*(N))
-        U{jj} = w{1,k(jj)};
-    end
-
 % Weights; more trust into component --> higher weight
 % weight is proportional to the inverse of the variance
-    wy = 10;
-    wu = 10;
-    wb = 0.1;
+    wy = 5;
+    wu = 5;
+    wb = 0.5;
 
 % input and output measurements
     % measurement values as row vector
-    y1 = reshape(y1', [(N+1)*n_cyc,1]);
+    y1 = reshape(y1', [(N+1)*n_amp,1]);
     y1 = y1';
     u1 = u1(:, 1:end-1);
-    u1 = reshape(u1', [N*n_cyc,1]);
+    u1 = reshape(u1', [N*n_amp,1]);
     u1 = u1';
-
     m=[u1,y1];                                % Concatenate measurements values
 
     % symbolic measuremnt row vector
-    U1=MX.sym('U1',nu,N*n_cyc);
-    Y1=MX.sym('Y1',1,(N+1)*n_cyc);
+    U1=MX.sym('U1',nu,N*n_amp);
+    Y1=MX.sym('Y1',1,(N+1)*n_amp);
     
     M=[U1,Y1];                                % Concatenate measurements in symbolic
 
 % Objective
-    ey = y1'-vertcat(xk1{:});
-    eu = u1'- vertcat(U{:});
-    eb = vertcat(B{:});
-
-% Jacobian
+    ey = abs(y1'-vertcat(x1{:}));
+    eu = abs(u1'- vertcat(U{:}));
+    eb = abs(vertcat(B{:}));
+    ex = abs(vertcat(x_0{:}));
+    R = [sqrt(wu).*eu;sqrt(wy).*ey;sqrt(wb).*eb;ex];
+% Objective function
     J = 0.5*wy*dot(ey,ey) + 0.5*wu*dot(eu,eu) + 0.5*wb*dot(eb,eb);
-    
+    J = J + 0.1*dot(ex,ex);
 % create nlp structure
     nlp = struct('f', J, 'x', params, 'g', vertcat(g{:}), 'p', M);
     
