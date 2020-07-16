@@ -15,7 +15,7 @@ amp = 1:N_amp;%[1,2,4,8]
 %[x,xi]=pseudogen3(2,[1 1],[0 2],25);
 [x,xi]=pseudogen3(3,[1 0 -1],[1 0 2],25);
 %[x,xi]=pseudogen3(5,[0 0 1 -1 -1],[2 0 1 0 2],25);
-
+ndata = N_amp*size(x,2);
 
 %% reduction of data points
 
@@ -25,6 +25,7 @@ tt = NSamp/sr;
 ff=1/tt;
 %T = 60.5-tt;
 T = 6.5-tt;
+
 
 % define noise for realistic data
 fco = [0.02, 0.2]; % [Hz] Cut off Frequenzen fuer den bandpass filter
@@ -76,7 +77,7 @@ for j_cyc=1:N_cyc
 
         % get first state trajectory (which is body sway)
         y(:,:) = out(1,:,:);
-        
+        x_0 = out(2:7,:,:);
         Q{i_amp,j_cyc,2} = y;
 
         %plot(y'); title('simulated output')
@@ -89,16 +90,16 @@ for j_cyc=1:N_cyc
         
         y = y + noise;
         
-        hold on
+        %hold on
         %plot(y');
         Q{i_amp,j_cyc,3} = y;
         %% create nlp
         disp('Creating nlp')
-        [ nlp, m, lbw, ubw, lbg, ubg, w0 ] = get_nlp(ode, u, y, out, i_amp, N, tt);
+        [ nlp, m, lbw, ubw, lbg, ubg, w0, R ] = get_nlp(ode, u, y, out, i_amp, N, tt);
 
         %% Create an NLP solver
         disp('Creating nlp solver')
-        options.ipopt.max_iter=5;                                             
+        options.ipopt.max_iter=100;                                             
         %options.ipopt.linear_solver='ma57';
         %options.hess_lag = hess_lag;
 
@@ -111,7 +112,7 @@ for j_cyc=1:N_cyc
         disp('solving nlp')
 
         % params_init=[w0; params_Start]; % start with ideal parameters
-        params_init=[w0;0.55; 1.25; 0.8; 2; 0.3*mp*9.81*H/180*pi; 0.2; 0.5; 44]; % vary starting parameters from ideal ones
+        params_init=[w0;2; 0.2; 0.2; 4; 0.2*mp*9.81*H/180*pi; 0.7; 0.2; 33]; % vary starting parameters from ideal ones
                         % Wfg; Wff; Lambda; SG; Kd; Tau; Kf; Fs;
         tic
         sol = solver('x0', params_init, 'lbx', lbw, 'ubx', ubw,...
@@ -123,60 +124,53 @@ for j_cyc=1:N_cyc
         clear y w0
     end
 end
-%% Get Jacobian
-    nu = 1;
-    nx = 7;
-    nb = 2;
-    s = nx+nu+nb;          
-y_in = reshape(Q{2,1,3}',[(N+1)*N_amp,1]);
-u_in = reshape(Q{2,1,4}',[(N+1)*N_amp,1]);
+% Parameter optimum of the nlp
+np = 8;
+params_opt = sol.x(end-np+1:end,:);
 
-for i = N_amp:-1:1 
-    u_in(i*(N+1)) = [];
-end
+%% Get Jacobian       
+% y_in = reshape(Q{2,1,3}',[(N+1)*N_amp,1]);
+% u_in = reshape(Q{2,1,4}',[(N+1)*N_amp,1]);
+% res_u = abs(u_opt - u_in);
+% res_y = abs(y_opt - y_in);
+% res_b1 = abs(b1_opt);
+% res_b7 = abs(b7_opt);
 
-y_opt = [];
-for i= 1:N_amp*N_cyc
-    y_opt = [y_opt; sol.x( 1+(i-1)*( N*s+(s-1) ) :s: 1+(i-1)*( N*s+(s-1) ) + N*s)];
-end
-u_opt = [];
-for i= 1:N_amp*N_cyc
-    u_opt = [u_opt; sol.x( 1+(i-1)*( N*s+(s-1) ) +nx+nb :s: 1+(i-1)*( N*s+(s-1) ) +nx+nb  + (N-1)*s)];
-end
-b1_opt = [];
-for i= 1:N_amp*N_cyc
-    b1_opt = [b1_opt; sol.x( 1+(i-1)*( N*s+(s-1) ) + nx:s: 1+(i-1)*( N*s+(s-1) ) + N*s + nx)];
-end
-b7_opt = [];
-for i= 1:N_amp*N_cyc
-    b7_opt = [b7_opt;sol.x( 1+(i-1)*( N*s+(s-1) ) + nx +1:s: 1+(i-1)*( N*s+(s-1) ) + N*s + nx+1)];
-end
-res_u = abs(u_opt - u_in);
-res_y = abs(y_opt - y_in);
-res_b1 = abs(b1_opt);
-res_b7 = abs(b7_opt);
-wy = 10;
-wu = 10;
-wb = 0.1;
-r = [sqrt(wu).*res_u; sqrt(wy).*res_y; sqrt(wb).*res_b1;sqrt(wb).*res_b7];
-jac_f_fun = Function('jac_f_fun',{nlp.x, nlp.p},{jacobian(nlp.f,nlp.x)}); 
-jac_g_fun = Function('jac_g_fun',{nlp.x, nlp.p},{jacobian(nlp.g,nlp.x)}); 
-jac_r_fun = Function('jac_r_opt',{nlp.x},{jacobian(r,nlp.x)});
-jac_f_opt = jac_f_fun(sol.x, m);
-jac_g_opt = jac_g_fun(sol.x, m);
-jac_r_opt = jac_r_fun(sol.x);
-Df_full = full(jac_r_opt);
-Dg_full = full(jac_g_opt);
-Df_fullmat = Df_full'*Df_full;
-det(Df_fullmat)
+
 ng = size(nlp.g,1);
 nx = size(nlp.x,1);
-if rank(Dg_full) ~= ng %|| rank([Df_full; Dg_full]) ~= nx
-    disp('rank check failed')
+% Define derivative of the equality constraints and the residuals
+jac_g_fun = Function('jac_g_fun',{nlp.x, nlp.p},{jacobian(nlp.g,nlp.x)}); 
+jac_r_fun = Function('jac_r_fun',{nlp.x},{jacobian(R,nlp.x)});
+
+% Evaluate the derivatives at the solution 
+jac_g_opt = jac_g_fun(sol.x, m);
+jac_r_opt = jac_r_fun(sol.x);
+
+% Convert to full matrices
+Dr_full = full(jac_r_opt);
+Dg_full = full(jac_g_opt);
+
+%% Build the M matrix to extract the covariance matrix via LU decomposition
+Dr_fullmat = Dr_full'*Dr_full;
+M = sparse([jac_r_opt'*jac_r_opt jac_g_opt'; jac_g_opt zeros(ng)]); 
+M_decomposed = decomposition(M,'LU');
+XZ = M_decomposed \ [eye(nx); zeros(ng, nx)];
+X  = XZ(1:nx, 1:nx);
+C_p = X(end-np+1:end, end-np+1:end);
+
+% Rank check for more information see documentary
+r_g = rank(Dg_full);
+r_r = rank([Dr_full; Dg_full]);
+if r_g ~= ng || r_r ~= nx
+    sprintf('rank check failed : Rank g = %d and ng = %d; Rank r = %d and nx = %d',r_g,ng,r_r,nx)
 else
     disp('rank check succesfull')
 end
- 
+
+%% Calculate confidence interval
+conf_b = [params_opt-(2.*np/(ndata-np)).*1.96.*(sqrt(diag(C_p))) params_opt+(2.*np/(ndata-np)).*1.96.*(sqrt(diag(C_p)))]; 
+table = [conf_b params_opt params_Start];
 
 %% Plot the results
 % Solution with k cycle and l amplitude
@@ -205,7 +199,6 @@ l=1;
 % end
 % plot(Error(2:4))
 % Parameters estimated
-np = 8;%length(params_d); 
 params_opt = sol.x(end-np+1:end,:);
 % Wfg; Wff; Lambda; SG; Kd; Tau; Kf; Fs;
 
@@ -213,4 +206,26 @@ params_opt = sol.x(end-np+1:end,:);
 % nx = 7;
 % nb = 2;
 % s = nx+nu+nb;    
+% 
+% for i = N_amp:-1:1 
+%     u_in(i*(N+1)) = [];
+% end
+% 
+% y_opt = [];
+% for i= 1:N_amp*N_cyc
+%     y_opt = [y_opt; sol.x( 1+(i-1)*( N*s+(s-1) ) :s: 1+(i-1)*( N*s+(s-1) ) + N*s)];
+% end
+% u_opt = [];
+% for i= 1:N_amp*N_cyc
+%     u_opt = [u_opt; sol.x( 1+(i-1)*( N*s+(s-1) ) +nx+nb :s: 1+(i-1)*( N*s+(s-1) ) +nx+nb  + (N-1)*s)];
+% end
+% b1_opt = [];
+% for i= 1:N_amp*N_cyc
+%     b1_opt = [b1_opt; sol.x( 1+(i-1)*( N*s+(s-1) ) + nx:s: 1+(i-1)*( N*s+(s-1) ) + N*s + nx)];
+% end
+% b7_opt = [];
+% for i= 1:N_amp*N_cyc
+%     b7_opt = [b7_opt;sol.x( 1+(i-1)*( N*s+(s-1) ) + nx +1:s: 1+(i-1)*( N*s+(s-1) ) + N*s + nx+1)];
+% end
+
 
