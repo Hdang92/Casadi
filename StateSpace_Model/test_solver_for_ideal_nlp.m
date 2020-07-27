@@ -50,8 +50,8 @@ params_Start = [0.55; 0.25; 0.3; 1; 0.3*mp*9.81*H/180*pi; 0.08; 0.1; 20];
 Q = cell(N_amp,N_cyc);
 
 
-for j_cyc=1:N_cyc
-    for i_amp=1:N_amp
+for i_amp=1:N_amp
+    for j_cyc=1:N_cyc
         u = zeros(i_amp,size(xi,2)*j_cyc);
 
         % simulate N_cyc cycles
