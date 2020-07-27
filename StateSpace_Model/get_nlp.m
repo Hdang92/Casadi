@@ -49,6 +49,7 @@ function [ nlp, m, lbw, ubw, lbg, ubg, w0, R ] = get_nlp(ode, u1, y1, out, n_amp
     ubg = []; % upper bound g
 
     x1 = {};
+    x_0 = {};
     x = {};
     B = {};
     U = {};
@@ -67,7 +68,9 @@ for i=1:n_amp
 
         w = [w, {Xk}, {Bk}];                        % symbolic nlp vector
         x1 = [x1,{Xk(1,1)}];
-        x_0 = [{Xk(2,1)},{Xk(3,1)},{Xk(4,1)},{Xk(5,1)},{Xk(6,1)},{Xk(7,1)}];
+        
+        x_0 = [x_0,{Xk(2,1)},{Xk(3,1)},{Xk(4,1)},{Xk(5,1)},{Xk(6,1)},{Xk(7,1)}];
+        
         B = [B,{Bk}];
         %%%%%%%%%% RP - changed initial X values from zero to inf
         lbw = [lbw; -inf*ones(nx,1); zeros(nb,1)]; % lower bounds of initial state and noise values
@@ -151,8 +154,7 @@ end
     ex = abs(vertcat(x_0{:}));
     R = [sqrt(wu).*eu;sqrt(wy).*ey;sqrt(wb).*eb;ex];
 % Objective function
-    J = 0.5*wy*dot(ey,ey) + 0.5*wu*dot(eu,eu) + 0.5*wb*dot(eb,eb);
-    J = J + 0.1*dot(ex,ex);
+    J = 0.5*wy*dot(ey,ey) + 0.5*wu*dot(eu,eu) + 0.5*wb*dot(eb,eb)+ 0.1*dot(ex,ex);
 % create nlp structure
     nlp = struct('f', J, 'x', params, 'g', vertcat(g{:}), 'p', M);
     
