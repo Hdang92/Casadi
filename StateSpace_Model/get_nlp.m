@@ -50,7 +50,6 @@ function [ nlp, m, lbw, ubw, lbg, ubg, w0, R ] = get_nlp(ode, u1, y1, out, n_amp
 
     x1 = {};
     x_0 = {};
-    x = {};
     B = {};
     U = {};
 % initialization of sample time count
@@ -70,7 +69,6 @@ for i=1:n_amp
         x1 = [x1,{Xk(1,1)}];
         
         x_0 = [x_0,{Xk(2,1)},{Xk(3,1)},{Xk(4,1)},{Xk(5,1)},{Xk(6,1)},{Xk(7,1)}];
-        
         B = [B,{Bk}];
         %%%%%%%%%% RP - changed initial X values from zero to inf
         lbw = [lbw; -inf*ones(nx,1); zeros(nb,1)]; % lower bounds of initial state and noise values
@@ -100,7 +98,6 @@ for i=1:n_amp
             w = [w, {Xk}, {Bk}];
             x1 = [x1, {Xk(1,1)}];
             B = [B, {Bk}];
-            %x = [x,{Xk(2:7,1)}];
 
             lbw = [lbw; -inf*ones(nx,1) ; -inf*ones(nb,1)];
             ubw = [ubw;  inf*ones(nx,1); inf*ones(nb,1)];
@@ -150,11 +147,20 @@ end
 % Objective
     ey = abs(y1'-vertcat(x1{:}));
     eu = abs(u1'- vertcat(U{:}));
+    ep1 = abs(Wfg-1);
+    ep2 = abs(Wff-1);
+    ep3 = abs(Lambda-1);
+    ep4 = abs(SG-1);
+    ep5 = abs(Kd-1);
+    ep6 = abs(Tau-1);
+    ep7 = abs(Kf-1);
+    ep8 = abs(Fs-1); 
     eb = abs(vertcat(B{:}));
     ex = abs(vertcat(x_0{:}));
     R = [sqrt(wu).*eu;sqrt(wy).*ey;sqrt(wb).*eb;ex];
 % Objective function
-    J = 0.5*wy*dot(ey,ey) + 0.5*wu*dot(eu,eu) + 0.5*wb*dot(eb,eb)+ 0.1*dot(ex,ex);
+
+    J = 0.5*wy*dot(ey,ey) + 0.5*wu*dot(eu,eu) + 0.5*wb*dot(eb,eb)+0.1*dot(ex,ex)+20*dot(ep1,ep1)+20*dot(ep2,ep2)+20*dot(ep3,ep3)+20*dot(ep4,ep4)+20*dot(ep5,ep5)+20*dot(ep6,ep6)+20*dot(ep7,ep7)+20*dot(ep8,ep8);
 % create nlp structure
     nlp = struct('f', J, 'x', params, 'g', vertcat(g{:}), 'p', M);
     
