@@ -9,18 +9,18 @@ import casadi.*
 
 %% get input and output data
 sr = 100; % sampling rate
-N_cyc = 2;
-N_amp = 2;
+N_cyc = 3;
+N_amp = 3;
 
 % Turn noise test on=1 or off else
-noise_test = 0;
+noise_test = 1;
 if noise_test==1
-    noise_amp = 2; % Compute with different noises
-    Q = cell(noise_amp,5);
+    noise_amp = 4; % Compute with different noises
+    Q = cell(noise_amp,6);
      
 elseif noise_test==0
     noise_amp = 1;
-    Q = cell(N_amp,N_cyc,5); 
+    Q = cell(N_amp,N_cyc,6); 
 end
 
 amp = 1:N_amp;%[1,2,4,8]
@@ -54,7 +54,7 @@ J = (72.8)*pi/180;
 opts = struct('tf', tt,'number_of_finite_elements',15, 'jit', false);
 F = integrator('F', 'rk', ode, opts);
 params_Start = [0.55; 0.25; 0.3; 1; 0.3*mp*9.81*H/180*pi; 0.08; 0.1; 20];
-                % Wfg; Wff; Lambda; SG; Kd; Tau; Kf; Fs;
+             % [K_{grav};K_{th};lambda; K_{s}; K_{d}; tau;K_{f};tau_f
                 
 
 %% initialize result cell array
@@ -95,7 +95,7 @@ if noise_test == 1
         [b,a] = butter(2,fco/fnyq,'bandpass'); % bandpass filter
         noise = filter(b,a,noise);
         
-        y = y + i_noise*noise;
+        y = y + 10*i_noise*noise;
 
         Q{i_noise,3} = y;   % Save body sway trajectory after including noise
         %% create nlp
@@ -116,7 +116,7 @@ if noise_test == 1
 
         % params_init=[w0; params_Start]; % start with ideal parameters
         params_init=[w0;2; 0.2; 0.2; 4; 0.2*mp*9.81*H/180*pi; 0.7; 0.2; 33]; % vary starting parameters from ideal ones
-                        % Wfg; Wff; Lambda; SG; Kd; Tau; Kf; Fs;
+                  % [w0;K_{grav};K_{th};lambda; K_{s}; K_{d}; tau;K_{f};tau_f
         tic
         sol = solver('x0', params_init, 'lbx', lbw, 'ubx', ubw,...
                     'lbg', lbg, 'ubg', ubg, 'p',m);
@@ -159,8 +159,11 @@ if noise_test == 1
         %% Calculate confidence interval
         %conf_b = [params_opt-(1.96.*(sqrt(diag(C_p)./(ndata)))) params_opt+(1.96.*(sqrt(diag(C_p)./(ndata))))];
         conf_b = [params_opt-(2.*np/(ndata-np)).*1.96.*(sqrt(diag(C_p))) params_opt+(2.*np/(ndata-np)).*1.96.*(sqrt(diag(C_p)))]; 
+        conf_err = 1.96.*(sqrt(diag(C_p)./(ndata)));
         Q{i_noise,5} = conf_b;  % Save confident bounds
-        clear y w0 conf_b
+        Q{i_noise,6} = conf_err;
+
+        clear y w0 conf_b conf_err
 
     end
 
@@ -223,7 +226,7 @@ elseif noise_test ==0
 
             % params_init=[w0; params_Start]; % start with ideal parameters
             params_init=[w0;2; 0.2; 0.2; 4; 0.2*mp*9.81*H/180*pi; 0.7; 0.2; 33]; % vary starting parameters from ideal ones
-                            % Wfg; Wff; Lambda; SG; Kd; Tau; Kf; Fs;
+                            % [K_{grav};K_{th};lambda; K_{s}; K_{d}; tau;K_{f};tau_f
             tic
             sol = solver('x0', params_init, 'lbx', lbw, 'ubx', ubw,...
                         'lbg', lbg, 'ubg', ubg, 'p',m);
@@ -264,10 +267,12 @@ elseif noise_test ==0
             end
 
             %% Calculate confidence interval
-            conf_b = [params_opt-(1.96.*(sqrt(diag(C_p)./(ndata)))) params_opt+(1.96.*(sqrt(diag(C_p)./(ndata))))]; 
             %conf_b = [params_opt-(2.*np/(ndata-np)).*1.96.*(sqrt(diag(C_p))) params_opt+(2.*np/(ndata-np)).*1.96.*(sqrt(diag(C_p)))]; 
-            Q{i_amp,j_cyc,5} = conf_b;  % Save confident bounds
-            clear y w0 conf_b
+            conf_b = [params_opt-(1.96.*(sqrt(diag(C_p)./(ndata)))) params_opt+(1.96.*(sqrt(diag(C_p)./(ndata))))];
+            conf_err = 1.96.*(sqrt(diag(C_p)./(ndata)));
+            Q{i_amp,j_cyc,5} = conf_b; % Save confidence bounds
+            Q{i_amp,j_cyc,6} = conf_err;
+            clear y w0 conf_b conf_err
         end
     end
 end
@@ -275,27 +280,23 @@ end
 
 
 
-
-
-
-
-%real_param = params_Start(param_ind).*ones(noise_amp,1);    
 if noise_test == 1
     %% Plot results testing noise amplitude
 
     bound = reshape(cell2mat(Q(:,5)),np,noise_amp*2);
+    bound_error = reshape(cell2mat(Q(:,6)),np,noise_amp);
     est_param = reshape(cell2mat(Q(:,4)),np,noise_amp);
-    p_names = ["Wfg"; "Wff"; "Lambda"; "SG"; "Kd"; "Tau"; "Kf"; "Fs"];
+    p_names = ["K_{grav}"; "K_{th}"; "\lambda"; "K_{s}"; "K_{d}"; "\tau"; "K_{f}"; "\tau_f"];
     figure(1)
     for i=1:8
         subplot(4,2,i);    
-        plot_real = plot(1:noise_amp,params_init(i).*ones(noise_amp,1),'s','linewidth',2);
+        plot_real = plot(1:noise_amp,params_Start(i).*ones(noise_amp,1),'s','linewidth',2);
         plot_real.LineStyle = 'none';
         plot_real.MarkerSize = 8;
         plot_real.MarkerEdgeColor = 'blue';
         plot_real.MarkerFaceColor = [0.2 .6 .6]; 
         hold on
-        plot_CI1 = errorbar(1:noise_amp,est_param(i,:)',bound(i,1:noise_amp)',bound(i,noise_amp+1:end)','linewidth',1.5);
+        plot_CI1 = errorbar(1:noise_amp,est_param(i,:)',bound_error(i,:),'linewidth',1.5);
         plot_CI1.LineStyle = 'none';
         plot_CI1.Marker = 'o';
         plot_CI1.MarkerSize = 5;
@@ -311,20 +312,21 @@ if noise_test == 1
     end
 elseif noise_test==0
     %% Plot results testing duration and amplitude 
-    cyc_ind = 1;
+    cyc_ind = 2;
     bound = reshape(cell2mat(Q(:,cyc_ind,5)),np,N_amp*2);
+    bound_error = reshape(cell2mat(Q(:,cyc_ind,6)),np,N_amp);
 	est_param = reshape(cell2mat(Q(:,cyc_ind,4)),np,N_amp);
-    p_names = ["Wfg"; "Wff"; "Lambda"; "SG"; "Kd"; "Tau"; "Kf"; "Fs"];
+    p_names = ["K_{grav}"; "K_{th}"; "\lambda"; "K_{s}"; "K_{d}"; "\tau"; "K_{f}"; "\tau_f"];
     figure(2)
     for i=1:8
         subplot(4,2,i);    
-        plot_real = plot(1:N_amp,params_init(i).*ones(N_amp,1),'s','linewidth',2);
+        plot_real = plot(1:N_amp,params_Start(i).*ones(N_amp,1),'s','linewidth',2);
         plot_real.LineStyle = 'none';
         plot_real.MarkerSize = 8;
         plot_real.MarkerEdgeColor = 'blue';
         plot_real.MarkerFaceColor = [0.2 .6 .6]; 
         hold on
-        plot_CI1 = errorbar(1:N_amp,est_param(i,:)',bound(i,1:N_amp)',bound(i,N_amp+1:end)','linewidth',1.5);
+        plot_CI1 = errorbar(1:N_amp,est_param(i,:)',bound_error(i,:),'linewidth',1.5);
         plot_CI1.LineStyle = 'none';
         plot_CI1.Marker = 'o';
         plot_CI1.MarkerSize = 5;
@@ -338,6 +340,7 @@ elseif noise_test==0
         grid
     end
 end
+%%
 % close all
 % figure(2)
 % Cycle index

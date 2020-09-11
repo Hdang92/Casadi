@@ -158,9 +158,9 @@ end
     eb = abs(vertcat(B{:}));
     ex = abs(vertcat(x_0{:}));
     R = [sqrt(wu).*eu;sqrt(wy).*ey;sqrt(wb).*eb;ex];
-% Objective function
+% Objective function+20*dot(ep1,ep1)+20*dot(ep2,ep2)+20*dot(ep3,ep3)+20*dot(ep4,ep4)+20*dot(ep5,ep5)+20*dot(ep6,ep6)+20*dot(ep7,ep7)+20*dot(ep8,ep8);
 
-    J = 0.5*wy*dot(ey,ey) + 0.5*wu*dot(eu,eu) + 0.5*wb*dot(eb,eb)+0.1*dot(ex,ex)+20*dot(ep1,ep1)+20*dot(ep2,ep2)+20*dot(ep3,ep3)+20*dot(ep4,ep4)+20*dot(ep5,ep5)+20*dot(ep6,ep6)+20*dot(ep7,ep7)+20*dot(ep8,ep8);
+    J = 0.5*wy*dot(ey,ey) + 0.5*wu*dot(eu,eu) + 0.5*wb*dot(eb,eb)+0.1*dot(ex,ex);
 % create nlp structure
     nlp = struct('f', J, 'x', params, 'g', vertcat(g{:}), 'p', M);
     
